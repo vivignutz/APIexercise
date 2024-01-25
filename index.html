@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pets for adoption</title>
+</head>
+<body>
+
+<h1>Pets for adoption</h1>
+
+<button onclick="getAllPets()">See All Pets</button>
+
+<div>
+    <h2>Add New Pet</h2>
+    <label for="name">Name:</label>
+    <input type="text" id="name" placeholder="Enter pet name"><br>
+    <label for="type">Type:</label>
+    <input type="text" id="type" placeholder="Enter pet type"><br>
+    <label for="breed">Breed:</label>
+    <input type="text" id="breed" placeholder="Enter pet breed"><br>
+    <label for="age">Age:</label>
+    <input type="number" id="age" placeholder="Enter pet age"><br>
+    <label for="color">Color:</label>
+    <input type="text" id="color" placeholder="Enter pet color"><br>
+    <button onclick="addNewPet()">Add Pet</button>
+</div>
+
+<script>
+    // function to see all pets
+    function getAllPets() {
+        fetch('http://localhost:2000/pets')
+            .then(response => response.json())
+            .then(data => {
+                console.log('All Pets:', data);
+                // Aqui você pode manipular os dados como desejar, por exemplo, exibindo em uma lista
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    // Add new pet
+    function addNewPet() {
+        const name = document.getElementById('name').value;
+        const type = document.getElementById('type').value;
+        const breed = document.getElementById('breed').value;
+        const age = document.getElementById('age').value;
+        const color = document.getElementById('color').value;
+
+        const newPet = {
+            name: name,
+            type: type,
+            breed: breed,
+            age: parseInt(age),
+            color: color
+        };
+
+        fetch('http://localhost:2000/pets', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(newPet),
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('New Pet Added:', data);
+                // Aqui você pode manipular os dados como desejar, por exemplo, exibindo uma mensagem de sucesso
+            })
+            .catch(error => console.error('Error:', error));
+    }
+</script>
+
+</body>
+</html>
