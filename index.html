@@ -11,6 +11,8 @@
 
 <button onclick="getAllPets()">See All Pets</button>
 
+<div id="petsList"></div>
+
 <div>
     <h2>Add New Pet</h2>
     <label for="name">Name:</label>
@@ -32,8 +34,13 @@
         fetch('http://localhost:2000/pets')
             .then(response => response.json())
             .then(data => {
-                console.log('All Pets:', data);
-                // Aqui você pode manipular os dados como desejar, por exemplo, exibindo em uma lista
+
+                // Shows pet's list
+                const petsListDiv = document.getElementById('petsList');
+                petsListDiv.innerHTML = '<h2>All Pets</h2>';
+                data.forEach(pet => {
+                    petsListDiv.innerHTML += `<p>${pet.name}, ${pet.type}, ${pet.breed}, ${pet.age} years, ${pet.color}</p>`;
+                });
             })
             .catch(error => console.error('Error:', error));
     }
@@ -64,7 +71,16 @@
             .then(response => response.json())
             .then(data => {
                 console.log('New Pet Added:', data);
-                // Aqui você pode manipular os dados como desejar, por exemplo, exibindo uma mensagem de sucesso
+
+                // Clear form fields after successful addition
+                document.getElementById('name').value = '';
+                document.getElementById('type').value = '';
+                document.getElementById('breed').value = '';
+                document.getElementById('age').value = '';
+                document.getElementById('color').value = '';
+
+                // Update pet's list
+                getAllPets();
             })
             .catch(error => console.error('Error:', error));
     }
