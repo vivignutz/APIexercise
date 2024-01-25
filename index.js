@@ -25,18 +25,21 @@ async function addPet(req, res) {
 
     req.on('end', () => {
         try {
-            // Verifica se o corpo da requisição não está vazio
             if (!data.trim()) {
                 throw new Error('Request body is empty');
             }
 
             const newPet = JSON.parse(data);
+
             fs.readFile('db.json', 'utf8', (err, existingData) => {
                 if (err) {
                     res.writeHead(500, { 'Content-Type': 'application/json' });
                     res.end(JSON.stringify({ error: 'Error reading pet data' }));
                 } else {
                     const pets = JSON.parse(existingData);
+
+                    newPet.id = generateUniqueId(pets);
+
                     pets.push(newPet);
 
                     fs.writeFile('db.json', JSON.stringify(pets), 'utf8', (err) => {
@@ -58,6 +61,12 @@ async function addPet(req, res) {
     });
 }
 
+// Generate new ID
+function generateUniqueId(pets) {
+  const maxId = pets.reduce((max, pet) => (pet.id > max ? pet.id : max), 0);
+  return maxId + 1;
+}
+
 // Method to save data
 function savePetsToFile(pets) {
     return new Promise((resolve, reject) => {
@@ -71,9 +80,52 @@ function savePetsToFile(pets) {
     });
 }
 
+// Editing pet
+async function editPet(req, res) {
+    try {
+        const body = await getRequestBody(req);
+        const pets = await readPetsFromFile();
+
+        // To find pet by ID
+        const petId = parseInt(req.params.id);
+        const petIndex = pets.findIndex(pet => pet.id === petId);
+
+        if (petIndex !== -1) {
+            // Update pet's details
+            pets[petIndex] = { ...pets[petIndex], ...body };
+
+            // Saving pet's update
+            await savePetsToFile(pets);
+
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ message: 'Pet successfully edited' }));
+        } else {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Pet not found' }));
+        }
+    } catch (error) {
+        console.error(error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Error editing pet' }));
+    }
+}
+
+// Method to read data
+function readPetsFromFile() {
+    return new Promise((resolve, reject) => {
+        fs.readFile('db.json', 'utf8', (err, data) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(JSON.parse(data));
+            }
+        });
+    });
+}
+
 // Creating server and routing
 const server = http.createServer(async (req, res) => {
-    // Configuração para lidar com preflight requests (CORS)
+    // CORS configuration
     if (req.method === 'OPTIONS') {
         res.writeHead(200, {
             'Access-Control-Allow-Origin': '*',
@@ -109,46 +161,3 @@ const port = 2000;
 server.listen(port, () => {
     console.log(`Server started on port ${port}`);
 });
-
-// Editing pet
-async function editPet(req, res) {
-    try {
-        const body = await getRequestBody(req);
-        const pets = await readPetsFromFile();
-
-        // To find pet by ID
-        const petId = parseInt(req.params.id);
-        const petIndex = pets.findIndex(pet => pet.id === petId);
-
-        if (petIndex !== -1) {
-            // Update pet's details
-            pets[petIndex] = { ...pets[petIndex], ...body };
-
-            // Saving pet's update
-            await savePetsToFile(pets);
-
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ message: 'Pet successfully edited' }));
-        } else {
-            res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Pet not found' }));
-        }
-    } catch (error) {
-        console.error(error);
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Error editing pet' }));
-    }
-}
-
-// Method to read data
-function readPetsFromFile() {
-  return new Promise((resolve, reject) => {
-      fs.readFile('db.json', 'utf8', (err, data) => {
-          if (err) {
-              reject(err);
-          } else {
-              resolve(JSON.parse(data));
-          }
-      });
-  });
-}

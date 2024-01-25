@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pets for adoption</title>
+    <title>My Pets List</title>
 </head>
 <body>
 
-<h1>Pets for adoption</h1>
+<h1>My Pets List</h1>
 
-<button onclick="getAllPets()">See All Pets</button>
+<button onclick="getAllPets()">Pet's List</button>
 
 <div id="petsList"></div>
 
@@ -25,7 +25,8 @@
     <input type="number" id="age" placeholder="Enter pet age"><br>
     <label for="color">Color:</label>
     <input type="text" id="color" placeholder="Enter pet color"><br>
-    <button onclick="addNewPet()">Add Pet</button>
+    <button id="addButton" onclick="addNewPet()">Add Pet</button>
+
 </div>
 
 <script>
@@ -39,7 +40,10 @@
                 const petsListDiv = document.getElementById('petsList');
                 petsListDiv.innerHTML = '<h2>All Pets</h2>';
                 data.forEach(pet => {
-                    petsListDiv.innerHTML += `<p>${pet.name}, ${pet.type}, ${pet.breed}, ${pet.age} years, ${pet.color}</p>`;
+                    petsListDiv.innerHTML += `
+                        <p>${pet.name}, ${pet.type}, ${pet.breed}, ${pet.age} years, ${pet.color}
+                        <button onclick="editPet(${pet.id})">Edit</button></p>
+                    `;
                 });
             })
             .catch(error => console.error('Error:', error));
@@ -79,10 +83,79 @@
                 document.getElementById('age').value = '';
                 document.getElementById('color').value = '';
 
-                // Update pet's list
+                // Update pets
                 getAllPets();
             })
             .catch(error => console.error('Error:', error));
+    }
+
+    // Edit pet
+    function editPet(petId) {
+    fetch(`http://localhost:2000/pets/${petId}`)
+        .then(response => response.json())
+        .then(pet => {
+            // Fill the form with pet details
+            document.getElementById('name').value = pet.name;
+            document.getElementById('type').value = pet.type;
+            document.getElementById('breed').value = pet.breed;
+            document.getElementById('age').value = pet.age;
+            document.getElementById('color').value = pet.color;
+
+            // Change the button text to indicate editing
+            const addButton = document.getElementById('addButton');
+            addButton.innerHTML = 'Save Changes';
+
+            // Attach the edit function to the button
+            addButton.onclick = () => saveChanges(petId);
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    // Save changes to the edited pet
+    function saveChanges(petId) {
+    const name = document.getElementById('name').value;
+    const type = document.getElementById('type').value;
+    const breed = document.getElementById('breed').value;
+    const age = document.getElementById('age').value;
+    const color = document.getElementById('color').value;
+
+    const updatedPet = {
+        name: name,
+        type: type,
+        breed: breed,
+        age: parseInt(age),
+        color: color
+    };
+
+    fetch(`http://localhost:2000/pets/${petId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedPet),
+    })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Pet Updated:', data);
+
+            // Clear form fields after successful update
+            document.getElementById('name').value = '';
+            document.getElementById('type').value = '';
+            document.getElementById('breed').value = '';
+            document.getElementById('age').value = '';
+            document.getElementById('color').value = '';
+
+            // Change the button text back to add new pet
+            const addButton = document.getElementById('addButton');
+            addButton.innerHTML = 'Add Pet';
+
+            // Attach the addNewPet function to the button
+            addButton.onclick = addNewPet;
+
+            // Update pets
+            getAllPets();
+        })
+        .catch(error => console.error('Error:', error));
     }
 </script>
 
